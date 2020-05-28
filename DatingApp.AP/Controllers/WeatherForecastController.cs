@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using DatingApp.API.Data;
+using Microsoft.EntityFrameworkCore;
+
 
 namespace DatingApp.API.Controllers
 {
@@ -10,20 +13,32 @@ namespace DatingApp.API.Controllers
     [ApiController]
     public class ValuesController : ControllerBase
     {
+
+      private readonly DataContext _context;
+
+        public ValuesController(DataContext context ){
+
+          
+        _context= context;
+
+        }
         // GET api/values
         [HttpGet]
-        public IActionResult GetValues()
+        public async Task<IActionResult> GetValues()
         {
-          string jsonBlob  =  @"[{ ""id"": 1,""name"":""shail"" },{ ""id"": 2,""name"":""charu"" }]";
-          return Ok(jsonBlob);
+          var values= await _context.Values.ToListAsync();
+           //string values  =  @"[{ ""id"": 1,""name"":""shail"" },{ ""id"": 2,""name"":""charu"" }]";
+           return Ok(values);
         }
 
         // GET api/values/5
         [HttpGet("{id}")]
-        public IActionResult GetValue()
+        public async Task<IActionResult> GetValue(int id)
         {
-             string jsonBlob  = @"{ ""id"": 1,""name"":""shail"" }";
-          return Ok(jsonBlob);
+          var value=await _context.Values.FirstOrDefaultAsync(x =>x.Id==id);
+
+            // string value  = @"{ ""id"": 1,""name"":""shail"" }";
+          return Ok(value);
         }
 
         // POST api/values
