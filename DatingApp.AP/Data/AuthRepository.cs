@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using DatingApp.API.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace DatingApp.API.Data
 {
@@ -13,9 +14,32 @@ namespace DatingApp.API.Data
 
         }
 
-        public Task<User> Login(string username, string password)
+        public async Task<User> Login(string username, string password)
         {
-            throw new System.NotImplementedException();
+            var user=await _context.User.FirstOrDefaultAsync(x => x.Username == username);
+            if (user ==null)
+            return null;
+           if(!VerifyPasswordHash(password,user.PasswordHash,user.PasswordSalt))
+           return null;
+
+           return user;
+
+        }
+
+        private bool VerifyPasswordHash(string password, byte[] passwordHash, byte[] passwordSalt)
+        {
+                 using(var hmac=new System.Security.Cryptography.HMACSHA512(passwordSalt))
+            {
+                   
+                    var computedhash=hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+                    for (int i = 0 ; i < computedhash.Length; i++)
+                    {
+                        if(computedhash[i] != passwordHash[i]) return false;
+                    }
+
+
+            }
+            return true;
         }
 
         public async Task<User> Register(User user, string password)
@@ -26,7 +50,7 @@ namespace DatingApp.API.Data
             user.PasswordHash = passwordHash;
             user.PasswordSalt=passwordSalt;
 
-            await _context.Users.AddAsync(user);
+            await _context.User.AddAsync(user);
             await _context.SaveChangesAsync();
             return user;
 
@@ -42,9 +66,12 @@ namespace DatingApp.API.Data
             }
         }
 
-        public Task<bool> UserExisits(string username)
+        public async Task<bool> UserExisits(string username)
         {
-            throw new System.NotImplementedException();
+            if(await _context.User.AnyAsync(x => x.Username == username))
+            return true;
+
+            return false;
         }
     }
 }
